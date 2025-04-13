@@ -1,0 +1,14 @@
+---
+- name: Apply template to named.conf.options
+  tags: name_resolution
+  ansible.builtin.template:
+    src: templates/named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    mode: 0644
+
+- name: Enable and start bind9
+  tags: name_resolution
+  ansible.builtin.service:
+    name: bind
+    state: started
+    enabled: yes

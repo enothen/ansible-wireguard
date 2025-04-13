@@ -1,0 +1,4 @@
+[Interface]
+Address = {{ server_vpn_ip }}/{{ vpn_cidr | split('/') | last }}
+ListenPort = {{ vpn_port | default('51820') }}
+PrivateKey = {{ private_key.stdout }}

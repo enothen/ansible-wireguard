@@ -1,0 +1,5 @@
+---
+- name: Install and configure wireguard
+  ansible.builtin.include_role:
+    name: wireguard
+    tasks_from: "{{ task }}"

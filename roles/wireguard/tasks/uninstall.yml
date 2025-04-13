@@ -1,0 +1,41 @@
+---
+- name: Stop Wireguard peers
+  ansible.builtin.service:
+    name: wg-quick@wg0.service
+    state: stopped
+    enabled: false
+  when: inventory_hostname in groups["wgpeers"]
+  ignore_errors: true
+
+- name: Stop Wireguard server
+  ansible.builtin.service:
+    name: wg-quick@wg0.service
+    state: stopped
+    enabled: false
+  when: inventory_hostname in groups["wgserver"]
+  ignore_errors: true
+
+- name: Uninstall packages in Debian distros
+  ansible.builtin.apt:
+    name: wireguard-tools
+    state: absent
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Uninstall packages in Red Hat distros
+  ansible.builtin.dnf:
+    name: wireguard-tools
+    state: absent
+  when: ansible_os_family == "RedHat"
+
+- name: Remove files
+  ansible.builtin.file:
+    path: /etc/wireguard
+    state: absent
+
+- name: Remove iptables rules
+  tags: iptables
+  include_tasks: configure-iptables.yml
+  when: inventory_hostname in groups["wgserver"]
+  vars:
+    state: absent

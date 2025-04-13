@@ -1,0 +1,3 @@
+[Peer]
+PublicKey = {{ public_key.stdout }}
+AllowedIPs = {{ vpn_ip_range.usable_ips.pop(groups['wireguard'].index(inventory_hostname) + 1) }}/32

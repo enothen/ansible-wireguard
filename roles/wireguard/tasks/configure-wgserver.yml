@@ -1,0 +1,19 @@
+---
+- name: Create Wireguard server configuration file
+  tags: configuration
+  ansible.builtin.template:
+    src: templates/wg-server-interface.j2
+    dest: /etc/wireguard/wg0.conf
+    mode: 0600
+  when: inventory_hostname in groups["wgserver"]
+
+- name: Add client to Wiregard server configuration
+  tags: configuration
+  ansible.builtin.blockinfile:
+    path: /etc/wireguard/wg0.conf
+    append_newline: true
+    block: "{{ lookup('template', 'wg-server-peer.j2') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ inventory_hostname }}"
+  when: inventory_hostname in groups["wgpeers"]
+  delegate_to: "{{ groups['wgserver'][0] }}"
+  throttle: 1

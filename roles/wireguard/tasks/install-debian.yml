@@ -1,0 +1,23 @@
+---
+- name: Install Wireguard in Debian distros
+  ansible.builtin.apt:
+    name: wireguard-tools
+    state: "{{ state | default('present') }}"
+    update_cache: true
+
+- name: Install bind9
+  ansible.builtin.apt:
+    name: bind9
+    state: present
+  when: 
+    - install_nameserver | bool
+    - inventory_hostname in groups["wgserver"]
+
+- name: Install iptables
+  ansible.builtin.apt:
+    name: 
+      - iptables
+      - iptables-persistent
+    state: present
+  when: 
+    - inventory_hostname in groups["wgserver"]

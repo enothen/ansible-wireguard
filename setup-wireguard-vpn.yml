@@ -1,0 +1,11 @@
+---
+- name: Setup a Wireguard vpn using defined server and peers
+  hosts: wireguard
+  gather_facts: True
+  become: True
+
+  tasks:
+    - name: Install/Uninstall wireguard
+      ansible.builtin.import_role:
+        name: wireguard
+        tasks_from: main.yml

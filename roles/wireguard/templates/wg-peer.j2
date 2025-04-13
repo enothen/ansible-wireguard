@@ -1,0 +1,11 @@
+[Interface]
+Address = {{ vpn_ip_range.usable_ips.pop(groups['wireguard'].index(inventory_hostname) + 1) }}/{{ vpn_cidr | split('/') | last }}
+DNS = {{ server_vpn_ip }}
+PrivateKey = {{ private_key.stdout }}
+MTU = {{ wireguard_peer_interface_mtu }}
+
+[Peer]
+PublicKey = {{ server_public_key }}
+AllowedIPs = 0.0.0.0/0
+Endpoint = {{ groups['wgserver'][0] }}:{{ vpn_port | default('51820') }}
+PersistentKeepalive = 25

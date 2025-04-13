@@ -1,0 +1,31 @@
+---
+- name: Check public ip address from wireguard server
+  ansible.builtin.uri:
+    url: https://ifconfig.me/ip
+    return_content: true
+  register: ip_server
+  when: inventory_hostname in groups["wgpeers"]
+  delegate_to: "{{ groups['wgserver'][0] }}"
+
+- name: Check public ip address from wireguard peers
+  ansible.builtin.uri:
+    url: https://ifconfig.me/ip
+    return_content: true
+  retries: 3
+  delay: 10
+  register: ip_peer
+  when: inventory_hostname in groups["wgpeers"]
+
+- name: Display public ip addresses from server and peers
+  ansible.builtin.debug:
+    msg:
+      - "Public IPs server / peer: {{ ip_server.content }} / {{ ip_peer.content }}"
+  when: inventory_hostname in groups["wgpeers"]
+
+- name: Fail if ip addresses are different
+
+  ansible.builtin.fail:
+    msg: "Public IP address of peer is not the same as the server"
+  when: 
+    - inventory_hostname in groups["wgpeers"]
+    - ip_server.content != ip_peer.content

@@ -1,0 +1,15 @@
+# Default is to install
+task: install
+
+# Wireguard vpn port
+vpn_port: 51820
+
+# Subnet to use for the VPN
+vpn_cidr: 10.11.1.0/24
+
+# Wireguard interface peer MTU, slightly smaller than on the server side
+wireguard_peer_interface_mtu: 1360
+
+# Whether to install a nameserver on the Wireguard server to cache name 
+# resolution requests for the peers. Otherwise rely on upstream servers.
+install_nameserver: true

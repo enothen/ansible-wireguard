@@ -1,0 +1,14 @@
+---
+- name: Start Wireguard server
+  ansible.builtin.service:
+    name: wg-quick@wg0.service
+    state: started
+    enabled: true
+  when: inventory_hostname in groups["wgserver"]
+
+- name: Start Wireguard peers
+  ansible.builtin.service:
+    name: wg-quick@wg0.service
+    state: started
+    enabled: true
+  when: inventory_hostname in groups["wgpeers"]

@@ -1,0 +1,59 @@
+---
+- name: Check if private key exists
+  ansible.builtin.stat:
+    path: /etc/wireguard/private.key
+  register: private_key_file
+
+- name: Block to create private key
+  when: not private_key_file.stat.exists
+  block:
+  - name: Create private key
+    ansible.builtin.shell:
+      wg genkey
+    register: private_key
+    when: not private_key_file.stat.exists
+
+  - name: Save private key to file
+    ansible.builtin.copy:
+      content: "{{ private_key.stdout }}\n"
+      dest: /etc/wireguard/private.key
+      mode: 0600
+
+- name: Get content of private key
+  ansible.builtin.shell:
+    cat /etc/wireguard/private.key
+  register: private_key
+
+- name: Check if public key exists
+  ansible.builtin.stat:
+    path: /etc/wireguard/public.key
+  register: public_key_file
+
+- name: Block to create public key
+  when: not public_key_file.stat.exists
+  block:
+  - name: Create public key
+    ansible.builtin.shell:
+        cat /etc/wireguard/private.key | wg pubkey
+    register: public_key
+    when: not public_key_file.stat.exists
+
+  - name: Save public key
+    ansible.builtin.copy:
+      content: "{{ public_key.stdout }}\n"
+      dest: /etc/wireguard/public.key
+      mode: 0600
+    when: not public_key_file.stat.exists
+
+- name: Get content of public key
+  ansible.builtin.shell:
+    cat /etc/wireguard/public.key
+  register: public_key
+
+- name: Set VPN server facts
+  set_fact:
+    server_public_key: "{{ public_key.stdout }}"
+    server_vpn_ip: "{{ vpn_ip_range.usable_ips[1] }}"
+  run_once: True
+  delegate_to: "{{ groups['wgserver'][0] }}"
+

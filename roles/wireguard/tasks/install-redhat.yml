@@ -1,0 +1,18 @@
+---
+- name: Install Wireguard in Red Hat distros
+  ansible.builtin.dnf:
+    name: wireguard-tools
+    state: "{{ state | default('present') }}"
+
+- name: Install bind9
+  ansible.builtin.dnf:
+    name: bind
+    state: present
+  when: 
+    - install_nameserver | bool
+    - inventory_hostname in groups["wgserver"]
+
+- name: Install iptables
+  ansible.builtin.dnf:
+    name: iptables-nft
+    state: present

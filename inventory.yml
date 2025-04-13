@@ -1,0 +1,17 @@
+#
+# Inventory for setting Wireguard vpn
+#
+wireguard:
+  children:
+    wgserver:
+    wgpeers:
+
+wgserver:
+  hosts:
+    server.sitea.net:
+
+wgpeers:
+  hosts:
+    peer1.siteb.net:
+    peer2.sitec.net:
+    peer3.sited.net:

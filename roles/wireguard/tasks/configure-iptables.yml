@@ -1,0 +1,60 @@
+---
+- name: "{{ task }} masquerade rule for traffic from vpn interface"
+  ansible.builtin.iptables:
+    state: "{{ state | default(omit) }}"
+    table: nat
+    chain: POSTROUTING
+    source: "{{ vpn_cidr }}"
+    out_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+    jump: MASQUERADE
+  notify:
+    - Save firewall rules
+
+- name: "{{ task }} rule to allow traffic from vpn port"
+  ansible.builtin.iptables:
+    state: "{{ state | default(omit) }}"
+    chain: INPUT
+    in_interface: "{{ wg_interface | default('wg0') }}"
+    jump: ACCEPT
+  notify:
+    - Save firewall rules
+
+- name: "{{ task }} rule to forward traffic to wireguard interface"
+  ansible.builtin.iptables:
+    state: "{{ state | default(omit) }}"
+    chain: FORWARD
+    in_interface: "{{ wg_interface | default('wg0') }}"
+    out_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+    jump: ACCEPT
+  notify:
+    - Save firewall rules
+
+- name: "{{ task }} rule to forward traffic to wireguard interface"
+  ansible.builtin.iptables:
+    state: "{{ state | default(omit) }}"
+    chain: FORWARD
+    in_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+    out_interface: "{{ wg_interface | default('wg0') }}"
+    jump: ACCEPT
+  notify:
+    - Save firewall rules
+
+- name: "{{ task }} rule to allow traffic to vpn port"
+  ansible.builtin.iptables:
+    state: "{{ state | default(omit) }}"
+    chain: INPUT
+    protocol: udp
+    in_interface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+    destination_port: "{{ vpn_port }}"
+    jump: ACCEPT
+  notify:
+    - Save firewall rules
+
+- name: Ensure /etc/iptables exists
+  ansible.builtin.file:
+    state: directory
+    path: /etc/iptables
+    mode: '0755'
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

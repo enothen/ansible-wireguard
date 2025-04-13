@@ -1,0 +1,83 @@
+---
+- name: Install packages in Debian distros
+  tags: dependencies
+  include_tasks: install-debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Install packages in Red Hat distros
+  tags: dependencies
+  include_tasks: install-redhat.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Block for sysctl settings on wgserver
+  tags: sysctl
+  when: inventory_hostname in groups["wgserver"]
+  vars:
+    target_file: /etc/sysctl.d/99-wg-tunning.conf
+  block:
+    - name: Enable ipv4 forwarding
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_file: "{{ target_file }}"
+        reload: True
+
+    - name: Configure TCP congestion control
+      ansible.posix.sysctl:
+        name: net.ipv4.tcp_congestion_control
+        value: bbr
+        sysctl_file: "{{ target_file }}"
+        reload: True
+
+    - name: Configure packet buffering
+      ansible.posix.sysctl:
+        name: net.core.netdev_budget
+        value: 600
+        sysctl_file: "{{ target_file }}"
+        reload: True
+
+    - name: Disable ipv6 
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: 1
+        sysctl_file: "{{ target_file }}"
+        reload: True
+      loop:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+
+- name: Configure iptables rules
+  tags: iptables
+  include_tasks: configure-iptables.yml
+  when: inventory_hostname in groups["wgserver"]
+
+- name: Set fact with all possible ip addresses from VPN IP range
+  set_fact:
+    vpn_ip_range: "{{ vpn_cidr | ansible.utils.usable_range }}"
+  run_once: True
+  delegate_to: localhost
+
+- name: Create public and private keys
+  ansible.builtin.import_role:
+    name: wireguard
+    tasks_from: configure-wgkeys.yml
+
+- name: Create wireguard server configuration
+  ansible.builtin.import_role:
+    name: wireguard
+    tasks_from: configure-wgserver.yml
+
+- name: Create wireguard peer configuration
+  ansible.builtin.import_role:
+    name: wireguard
+    tasks_from: configure-wgpeers.yml
+
+- name: Configure Wireguard service
+  ansible.builtin.import_role:
+    name: wireguard
+    tasks_from: configure-service.yml
+
+- name: Public ip check
+  ansible.builtin.import_role:
+    name: wireguard
+    tasks_from: ipcheck.yml
